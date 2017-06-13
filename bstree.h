@@ -19,11 +19,18 @@ struct bstree_ops {
     void (*free_object)(void *object);
 };
 
-struct bstree_node *bstree_insert(struct bstree_node *root, const struct bstree_ops *ops, void *data);
+struct bstree_node *bstree_insert(struct bstree_node *root, const struct bstree_ops *ops, void *object);
 
 void bstree_destroy(struct bstree_node *root, const struct bstree_ops *ops);
 
-void bstree_traverse_inorder(const struct bstree_node *root, void (*operation)(void *object));
+/* Traverse the tree with a given operation, optionally accumulating
+ * data in it_data. 'operation' must point to a valid function.
+ * Usage of it_data is up to the operation function given by the user.
+ * It is not used anywhere by us.
+ */
+void bstree_traverse_inorder(const struct bstree_node *root,
+        void *it_data,
+        void (*operation)(void *object, void *it_data));
 
 int bstree_count(const struct bstree_node *root, const struct bstree_ops *ops, const void *object);
 

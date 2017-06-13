@@ -129,14 +129,16 @@ void bstree_destroy(struct bstree_node *root, const struct bstree_ops *ops)
     free(root);
 }
 
-void bstree_traverse_inorder(const struct bstree_node *root, void (*operation)(void *object))
+void bstree_traverse_inorder(const struct bstree_node *root,
+        void *it_data,
+        void (*operation)(void *object, void *it_data))
 {
     if (!root) {
         return;
     }
-    bstree_traverse_inorder(root->left, operation);
-    operation(root->object);
-    bstree_traverse_inorder(root->right, operation);
+    bstree_traverse_inorder(root->left, it_data, operation);
+    operation(root->object, it_data);
+    bstree_traverse_inorder(root->right, it_data, operation);
 }
 
 int bstree_count(const struct bstree_node *root, const struct bstree_ops *ops, const void *object)
