@@ -50,6 +50,13 @@ void bstree_traverse_inorder(const struct bstree_node *root,
         void *it_data,
         void (*operation)(void *object, void *it_data));
 
+/* Traverse the tree in a similar fashion, but apply the operation 'count' times
+ * for each object, 'count' being the count of the object held in the tree.
+ */
+void bstree_traverse_inorder_cnt(const struct bstree_node *root,
+        void *it_data,
+        void (*operation)(void *object, void *it_data));
+
 int bstree_count(const struct bstree_node *root, const struct bstree_ops *ops, const void *object);
 
 #endif

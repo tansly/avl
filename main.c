@@ -68,8 +68,10 @@ int main(void)
     struct int_arr elements = { malloc(sizeof(int)), -1, 1 };
     for (i = 0; i < ARR_SIZE; i++) {
         arr[i] = malloc(sizeof(int));
-        *arr[i] = i;
+        *arr[i] = rand() % 10;
+        printf("*arr[%d] = %d\n", i, *arr[i]);
     }
+    putchar('\n');
     for (i = 0; i < ARR_SIZE; i++) {
         root = bstree_insert(root, &ops, arr[i]);
         arr[i] = NULL;
@@ -79,8 +81,16 @@ int main(void)
     printf("\nheight = %d\n", root->height);
     printf("\nsum = %d\n", sum);
     bstree_traverse_inorder(root, &elements, mk_array);
+    int n = 3;
+    printf("count of 3 = %d\n", bstree_count(root, &ops, &n));
     for (i = 0; i <= elements.last; i++) {
-        printf("arr[%d] = %d\n", i, elements.arr[i]);
+        printf("elements.arr[%d] = %d\n", i, elements.arr[i]);
+    }
+    elements.last = -1;
+    bstree_traverse_inorder_cnt(root, &elements, mk_array);
+    putchar('\n');
+    for (i = 0; i <= elements.last; i++) {
+        printf("elements.arr[%d] = %d\n", i, elements.arr[i]);
     }
     free(elements.arr);
     bstree_destroy(root, &ops);

@@ -159,6 +159,21 @@ void bstree_traverse_inorder(const struct bstree_node *root,
     bstree_traverse_inorder(root->right, it_data, operation);
 }
 
+void bstree_traverse_inorder_cnt(const struct bstree_node *root,
+        void *it_data,
+        void (*operation)(void *object, void *it_data))
+{
+    int i;
+    if (!root) {
+        return;
+    }
+    bstree_traverse_inorder_cnt(root->left, it_data, operation);
+    for (i = 0; i < root->count; i++) {
+        operation(root->object, it_data);
+    }
+    bstree_traverse_inorder_cnt(root->right, it_data, operation);
+}
+
 int bstree_count(const struct bstree_node *root, const struct bstree_ops *ops, const void *object)
 {
     if (!root) {
