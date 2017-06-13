@@ -57,6 +57,8 @@ void bstree_traverse_inorder_cnt(const struct bstree_node *root,
         void *it_data,
         void (*operation)(void *object, void *it_data));
 
-int bstree_count(const struct bstree_node *root, const struct bstree_ops *ops, const void *object);
+int bstree_count(const struct bstree_node *root, const struct bstree_ops *ops, const void *key);
+
+void *bstree_search(const struct bstree_node *root, const struct bstree_ops *ops, const void *key);
 
 #endif

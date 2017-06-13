@@ -187,3 +187,17 @@ int bstree_count(const struct bstree_node *root, const struct bstree_ops *ops, c
     }
     return root->count;
 }
+
+void *bstree_search(const struct bstree_node *root, const struct bstree_ops *ops, const void *key)
+{
+    if (!root) {
+        return NULL;
+    }
+    if (ops->compare_object(key, root->object) < 0) {
+        return bstree_search(root->left, ops, key);
+    }
+    if (ops->compare_object(key, root->object) > 0) {
+        return bstree_search(root->right, ops, key);
+    }
+    return root->object;
+}
