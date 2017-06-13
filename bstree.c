@@ -72,11 +72,6 @@ static struct bstree_node *double_with_right(struct bstree_node *root)
  */
 static struct bstree_node *balance(struct bstree_node *root)
 {
-    /* TODO
-     * This is currently a no-op. This will maintain the balance and height
-     * information at nodes. Now the tree works without balancing and with
-     * no valid height information at nodes.
-     */
     if (!root) {
         return NULL;
     }
