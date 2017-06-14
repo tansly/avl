@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define OUT_LEN 30
 
@@ -63,8 +64,8 @@ struct word *choose_next(struct word *curr)
     int i;
 
     bstree_traverse_inorder(curr->nextwords, &choices, fill_words);
-    for (i = 0, sum = 0, rnd = uniform_rnd(); i < choices.capacity; i++) {
-        if (sum + choices.arr[i]->cnt >= rnd) {
+    for (i = 0, sum = 0, rnd = uniform_rnd(); i <= choices.last; i++) {
+        if ((sum += choices.arr[i]->cnt) >= rnd) {
             chosen = choices.arr[i];
             free(choices.arr);
             return chosen;
@@ -167,6 +168,8 @@ int main(int argc, char **argv)
     struct word key_word;
 
     int i;
+
+    srand(time(NULL));
 
     getline(&line, &len, stdin);
     *strrchr(line, '\n') = '\0';
