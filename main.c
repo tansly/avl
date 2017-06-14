@@ -18,97 +18,183 @@
 
 #include "bstree.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#define ARR_SIZE 16
+#define OUT_LEN 30
 
-struct int_arr {
-    int *arr;
-    int last;
-    int size;
+struct word {
+    char *str;
+    struct bstree_node *nextwords;
+    struct bstree_ops *ops;
+    double cnt;
 };
 
-int cmp_int(const void *lhs, const void *rhs)
+struct word_arr {
+    struct word **arr;
+    int capacity;
+    int last;
+};
+
+double uniform_rnd(void)
 {
-    return *((const int *)lhs) - *((const int *)rhs);
+    return (double)rand() / (double)RAND_MAX;
 }
 
-void free_int(void *p)
+void fill_words(void *curr, void *words)
 {
-    free(p);
+    struct word_arr *word_arr = words;
+    struct word *word = curr;
+    if (word_arr->last >= word_arr->capacity - 1) {
+        word_arr->capacity *= 2;
+        word_arr->arr =
+            realloc(word_arr->arr, word_arr->capacity * sizeof *word_arr->arr);
+    }
+    word_arr->arr[++word_arr->last] = word;
 }
 
-int print_int(void *ptr, void *it_data)
+struct word *choose_next(struct word *curr)
 {
-    printf("%d\n", *(int *) ptr);
-    return 0;
+    struct word *chosen;
+    struct word_arr choices = { malloc(sizeof *choices.arr), 1, -1 };
+    double sum, rnd;
+    int i;
+
+    bstree_traverse_inorder(curr->nextwords, &choices, fill_words);
+    for (i = 0, sum = 0, rnd = uniform_rnd(); i < choices.capacity; i++) {
+        if (sum + choices.arr[i]->cnt >= rnd) {
+            chosen = choices.arr[i];
+            free(choices.arr);
+            return chosen;
+        }
+    }
+    assert(0);
 }
 
-int sum_int(void *ptr, void *it_data)
+int cmp_word(const void *lhs, const void *rhs)
 {
-    *(int *)it_data += *(int *)ptr;
-    return 0;
+    return strcmp(((struct word *)lhs)->str, ((struct word *)rhs)->str);
 }
 
-int sum_int_lt_5(void *ptr, void *it_data)
+void free_word(void *p)
 {
-    if (*(int *)ptr < 5) {
-        *(int *)it_data += *(int *)ptr;
-        return 0;
+    struct word *word = p;
+    bstree_destroy(word->nextwords, word->ops);
+    free(word);
+}
+
+struct word *mkword(char *str, struct bstree_ops *ops)
+{
+    struct word *w = malloc(sizeof *w);
+    w->str = str;
+    w->ops = ops;
+    w->nextwords = NULL;
+    w->cnt = 1;
+    return w;
+}
+
+void print_word(void *p, void *it_data)
+{
+    struct word *w = p;
+    printf("    %s : %.2f\n", w->str, w->cnt);
+}
+
+void print_tree(void *p, void *it_data)
+{
+    struct word *word = p;
+    printf("%s\n", word->str);
+    bstree_traverse_inorder(word->nextwords, NULL, print_word);
+}
+
+void sum_transition(void *p, void *it_data)
+{
+    double *sum = it_data;
+    struct word *w = p;
+    *sum += w->cnt;
+}
+
+void normalize_counts(void *p, void *it_data)
+{
+    struct word *word = p;
+    word->cnt /= *(double *)it_data;
+}
+
+void normalize_transitions(void *p, void *it_data)
+{
+    struct word *word;
+    double sum;
+    word = p;
+    sum = word->cnt;
+    bstree_traverse_inorder(word->nextwords, &sum, normalize_counts);
+}
+
+struct bstree_node *add_transition(struct bstree_node *root, struct bstree_ops *ops,
+        char *curr, char *next)
+{
+    struct word key;
+    struct word *word, *nextword;
+    key.str = curr;
+    word = bstree_search(root, ops, &key);
+    if (!word) {
+        word = mkword(curr, ops);
+        root = bstree_insert(root, ops, word);
     } else {
-        return 1;
+        word->cnt++;
     }
+    key.str = next;
+    nextword = bstree_search(word->nextwords, word->ops, &key);
+    if (!nextword) {
+        nextword = mkword(next, ops);
+        word->nextwords = bstree_insert(word->nextwords, ops, nextword);
+    } else {
+        nextword->cnt++;
+    }
+    return root;
 }
 
-int mk_array(void *ptr, void *it_data)
-{
-    struct int_arr *elements = it_data;
-    if (elements->last >= elements->size - 1) {
-        elements->arr = realloc(elements->arr, elements->size * 2 * sizeof(int));
-        elements->size = elements->size * 2;
-    }
-    elements->arr[++elements->last] = *(int *)ptr;
-    return 0;
-}
-
-int main(void)
+int main(int argc, char **argv)
 {
     struct bstree_node *root = NULL;
-    struct bstree_ops ops = { cmp_int, free_int };
-    int *arr[ARR_SIZE];
-    int i, sum = 0;
-    struct int_arr elements = { malloc(sizeof(int)), -1, 1 };
-    for (i = 0; i < ARR_SIZE; i++) {
-        arr[i] = malloc(sizeof(int));
-        *arr[i] = rand() % 10;
-        printf("*arr[%d] = %d\n", i, *arr[i]);
+    struct bstree_ops ops = { cmp_word, free_word };
+
+    char *line = NULL;
+    size_t len = 0;
+    char *curr, *next;
+
+    struct word *initial;
+    struct word key_word;
+
+    int i;
+
+    getline(&line, &len, stdin);
+    *strrchr(line, '\n') = '\0';
+
+    curr = strtok(line, " ");
+    while ((next = strtok(NULL, " ")) != NULL) {
+        root = add_transition(root, &ops, curr, next);
+        curr = next;
     }
-    putchar('\n');
-    for (i = 0; i < ARR_SIZE; i++) {
-        root = bstree_insert(root, &ops, arr[i]);
-        arr[i] = NULL;
+    root = add_transition(root, &ops, curr, line);
+    bstree_traverse_inorder(root, &ops, normalize_transitions);
+//    bstree_traverse_inorder(root, &ops, print_tree);
+
+    if (argc != 2) {
+        /* Choose first word of the input */
+        key_word.str = line;
+    } else {
+        key_word.str = argv[1];
     }
-    bstree_traverse_inorder(root, NULL, print_int);
-    bstree_traverse_inorder(root, &sum, sum_int);
-    printf("\nheight = %d\n", root->height);
-    printf("\nsum = %d\n", sum);
-    sum = 0;
-    bstree_traverse_inorder(root, &sum, sum_int_lt_5);
-    printf("\nsum lt 10 = %d\n", sum);
-    bstree_traverse_inorder(root, &elements, mk_array);
-    int n = 3;
-    printf("count of 3 = %d\n", bstree_count(root, &ops, &n));
-    for (i = 0; i <= elements.last; i++) {
-        printf("elements.arr[%d] = %d\n", i, elements.arr[i]);
+    for (i = 0; i < OUT_LEN; i++) {
+        initial = bstree_search(root, &ops, &key_word);
+        assert(initial || (argc == 2 && i == 0));
+        printf("%s ", initial->str);
+        key_word.str = choose_next(initial)->str;
     }
-    elements.last = -1;
-    bstree_traverse_inorder_cnt(root, &elements, mk_array);
-    putchar('\n');
-    for (i = 0; i <= elements.last; i++) {
-        printf("elements.arr[%d] = %d\n", i, elements.arr[i]);
-    }
-    free(elements.arr);
+    printf("%s\n", initial->str);
+
     bstree_destroy(root, &ops);
+    free(line);
     return 0;
 }
