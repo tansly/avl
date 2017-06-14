@@ -39,6 +39,12 @@ struct word_arr {
     int last;
 };
 
+struct random_choice {
+    struct word *word;
+    double rnd;
+    double sum;
+};
+
 double uniform_rnd(void)
 {
     return (double)rand() / (double)RAND_MAX;
@@ -56,22 +62,21 @@ void fill_words(void *curr, void *words)
     word_arr->arr[++word_arr->last] = word;
 }
 
+void choose_word(void *currp, void *choicep)
+{
+    struct word *curr = currp;
+    struct random_choice *choice = choicep;
+    if (choice->sum < choice->rnd) {
+        choice->word = curr;
+        choice->sum += curr->cnt;
+    }
+}
+
 struct word *choose_next(struct word *curr)
 {
-    struct word *chosen;
-    struct word_arr choices = { malloc(sizeof *choices.arr), 1, -1 };
-    double sum, rnd;
-    int i;
-
-    bstree_traverse_inorder(curr->nextwords, &choices, fill_words);
-    for (i = 0, sum = 0, rnd = uniform_rnd(); i <= choices.last; i++) {
-        if ((sum += choices.arr[i]->cnt) >= rnd) {
-            chosen = choices.arr[i];
-            free(choices.arr);
-            return chosen;
-        }
-    }
-    assert(0);
+    struct random_choice choice = { NULL, uniform_rnd(), 0 };
+    bstree_traverse_inorder(curr->nextwords, &choice, choose_word);
+    return choice.word;
 }
 
 int cmp_word(const void *lhs, const void *rhs)
@@ -195,7 +200,7 @@ int main(int argc, char **argv)
         printf("%s ", initial->str);
         key_word.str = choose_next(initial)->str;
     }
-    printf("%s\n", initial->str);
+    putchar('\n');
 
     bstree_destroy(root, &ops);
     free(line);
