@@ -110,7 +110,8 @@ static struct bstree_node *balance(struct bstree_node *root)
     return root;
 }
 
-struct bstree_node *bstree_insert(struct bstree_node *root, const struct bstree_ops *ops, void *object)
+struct bstree_node *bstree_insert(struct bstree_node *root,
+        const struct bstree_ops *ops, void *object)
 {
     if (!root) {
         return mknode(object);
@@ -174,7 +175,8 @@ void bstree_traverse_inorder_cnt(const struct bstree_node *root,
     bstree_traverse_inorder_cnt(root->right, it_data, operation);
 }
 
-int bstree_count(const struct bstree_node *root, const struct bstree_ops *ops, const void *object)
+int bstree_count(const struct bstree_node *root,
+        const struct bstree_ops *ops, const void *object)
 {
     if (!root) {
         return 0;
@@ -188,7 +190,8 @@ int bstree_count(const struct bstree_node *root, const struct bstree_ops *ops, c
     return root->count;
 }
 
-void *bstree_search(const struct bstree_node *root, const struct bstree_ops *ops, const void *key)
+void *bstree_search(const struct bstree_node *root,
+        const struct bstree_ops *ops, const void *key)
 {
     if (!root) {
         return NULL;

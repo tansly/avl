@@ -30,14 +30,16 @@ struct bstree_node {
 struct bstree_ops {
     int (*compare_object)(const void *lhs, const void *rhs);
     /* If the user supplies a function to free the objects, then we know that
-     * we take the ownership of the resources, and we should eventually free every pointer
-     * we are given if we are still holding it in the end. If the freeing function is NULL, we just keep
-     * the pointers to the objects and never free them, that means the user manages the lifetime.
+     * we take the ownership of the resources, and we should eventually
+     * free every pointer we are given if we are still holding it in the end.
+     * If the freeing function is NULL, we just keep the pointers to the
+     * objects and never free them, that means the user manages the lifetime.
      */
     void (*free_object)(void *object);
 };
 
-struct bstree_node *bstree_insert(struct bstree_node *root, const struct bstree_ops *ops, void *object);
+struct bstree_node *bstree_insert(struct bstree_node *root,
+        const struct bstree_ops *ops, void *object);
 
 void bstree_destroy(struct bstree_node *root, const struct bstree_ops *ops);
 
@@ -57,8 +59,10 @@ void bstree_traverse_inorder_cnt(const struct bstree_node *root,
         void *it_data,
         void (*operation)(void *object, void *it_data));
 
-int bstree_count(const struct bstree_node *root, const struct bstree_ops *ops, const void *key);
+int bstree_count(const struct bstree_node *root, const struct bstree_ops *ops,
+        const void *key);
 
-void *bstree_search(const struct bstree_node *root, const struct bstree_ops *ops, const void *key);
+void *bstree_search(const struct bstree_node *root, const struct bstree_ops *ops,
+        const void *key);
 
 #endif
