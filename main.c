@@ -50,13 +50,16 @@ double uniform_rnd(void)
     return (double)rand() / (double)RAND_MAX;
 }
 
-void choose_word(void *currp, void *choicep)
+int choose_word(void *currp, void *choicep)
 {
     struct word *curr = currp;
     struct random_choice *choice = choicep;
     if (choice->sum < choice->rnd) {
         choice->word = curr;
         choice->sum += curr->cnt;
+        return 0;
+    } else {
+        return 1;
     }
 }
 
@@ -89,39 +92,44 @@ struct word *mkword(char *str, struct bstree_ops *ops)
     return w;
 }
 
-void print_word(void *p, void *it_data)
+int print_word(void *p, void *it_data)
 {
     struct word *w = p;
     printf("    %s : %.2f\n", w->str, w->cnt);
+    return 0;
 }
 
-void print_tree(void *p, void *it_data)
+int print_tree(void *p, void *it_data)
 {
     struct word *word = p;
     printf("%s\n", word->str);
     bstree_traverse_inorder(word->nextwords, NULL, print_word);
+    return 0;
 }
 
-void sum_transition(void *p, void *it_data)
+int sum_transition(void *p, void *it_data)
 {
     double *sum = it_data;
     struct word *w = p;
     *sum += w->cnt;
+    return 0;
 }
 
-void normalize_counts(void *p, void *it_data)
+int normalize_counts(void *p, void *it_data)
 {
     struct word *word = p;
     word->cnt /= *(double *)it_data;
+    return 0;
 }
 
-void normalize_transitions(void *p, void *it_data)
+int normalize_transitions(void *p, void *it_data)
 {
     struct word *word;
     double sum;
     word = p;
     sum = word->cnt;
     bstree_traverse_inorder(word->nextwords, &sum, normalize_counts);
+    return 0;
 }
 
 struct bstree_node *add_transition(struct bstree_node *root, struct bstree_ops *ops,
