@@ -148,31 +148,37 @@ void bstree_destroy(struct bstree_node *root, const struct bstree_ops *ops)
     free(root);
 }
 
-void bstree_traverse_inorder(const struct bstree_node *root,
+int bstree_traverse_inorder(const struct bstree_node *root,
         void *it_data,
-        void (*operation)(void *object, void *it_data))
+        int (*operation)(void *object, void *it_data))
 {
-    if (!root) {
-        return;
-    }
-    bstree_traverse_inorder(root->left, it_data, operation);
-    operation(root->object, it_data);
-    bstree_traverse_inorder(root->right, it_data, operation);
+    return
+        root &&
+        (bstree_traverse_inorder(root->left, it_data, operation) ||
+        operation(root->object, it_data) ||
+        bstree_traverse_inorder(root->right, it_data, operation));
 }
 
-void bstree_traverse_inorder_cnt(const struct bstree_node *root,
+int bstree_traverse_inorder_cnt(const struct bstree_node *root,
         void *it_data,
-        void (*operation)(void *object, void *it_data))
+        int (*operation)(void *object, void *it_data))
 {
     int i;
     if (!root) {
-        return;
+        return 0;
     }
-    bstree_traverse_inorder_cnt(root->left, it_data, operation);
+    if (bstree_traverse_inorder_cnt(root->left, it_data, operation)) {
+        return 1;
+    }
     for (i = 0; i < root->count; i++) {
-        operation(root->object, it_data);
+        if (operation(root->object, it_data)) {
+            return 1;
+        }
     }
-    bstree_traverse_inorder_cnt(root->right, it_data, operation);
+    if (bstree_traverse_inorder_cnt(root->right, it_data, operation)) {
+        return 1;
+    }
+    return 0;
 }
 
 int bstree_count(const struct bstree_node *root,

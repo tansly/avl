@@ -39,17 +39,29 @@ void free_int(void *p)
     free(p);
 }
 
-void print_int(void *ptr, void *it_data)
+int print_int(void *ptr, void *it_data)
 {
     printf("%d\n", *(int *) ptr);
+    return 0;
 }
 
-void sum_int(void *ptr, void *it_data)
+int sum_int(void *ptr, void *it_data)
 {
     *(int *)it_data += *(int *)ptr;
+    return 0;
 }
 
-void mk_array(void *ptr, void *it_data)
+int sum_int_lt_5(void *ptr, void *it_data)
+{
+    if (*(int *)ptr < 5) {
+        *(int *)it_data += *(int *)ptr;
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+int mk_array(void *ptr, void *it_data)
 {
     struct int_arr *elements = it_data;
     if (elements->last >= elements->size - 1) {
@@ -57,6 +69,7 @@ void mk_array(void *ptr, void *it_data)
         elements->size = elements->size * 2;
     }
     elements->arr[++elements->last] = *(int *)ptr;
+    return 0;
 }
 
 int main(void)
@@ -80,6 +93,9 @@ int main(void)
     bstree_traverse_inorder(root, &sum, sum_int);
     printf("\nheight = %d\n", root->height);
     printf("\nsum = %d\n", sum);
+    sum = 0;
+    bstree_traverse_inorder(root, &sum, sum_int_lt_5);
+    printf("\nsum lt 10 = %d\n", sum);
     bstree_traverse_inorder(root, &elements, mk_array);
     int n = 3;
     printf("count of 3 = %d\n", bstree_count(root, &ops, &n));

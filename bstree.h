@@ -47,17 +47,20 @@ void bstree_destroy(struct bstree_node *root, const struct bstree_ops *ops);
  * data in it_data. 'operation' must point to a valid function.
  * Usage of it_data is up to the operation function given by the user.
  * It is not used anywhere by us.
+ * Traversal is stopped when the operation returns true.
+ * Returns true if traversal is stopped by the operation function,
+ * else false (traversal is finished by visiting all nodes).
  */
-void bstree_traverse_inorder(const struct bstree_node *root,
+int bstree_traverse_inorder(const struct bstree_node *root,
         void *it_data,
-        void (*operation)(void *object, void *it_data));
+        int (*operation)(void *object, void *it_data));
 
 /* Traverse the tree in a similar fashion, but apply the operation 'count' times
  * for each object, 'count' being the count of the object held in the tree.
  */
-void bstree_traverse_inorder_cnt(const struct bstree_node *root,
+int bstree_traverse_inorder_cnt(const struct bstree_node *root,
         void *it_data,
-        void (*operation)(void *object, void *it_data));
+        int (*operation)(void *object, void *it_data));
 
 int bstree_count(const struct bstree_node *root, const struct bstree_ops *ops,
         const void *key);
