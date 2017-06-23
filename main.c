@@ -109,6 +109,26 @@ int main(void)
         printf("elements.arr[%d] = %d\n", i, elements.arr[i]);
     }
     free(elements.arr);
+
+    puts("\nTesting remove function");
+    bstree_traverse_inorder(root, NULL, print_int);
+    putchar('\n');
+
+    n = 5;
+    root = bstree_remove(root, &ops, &n);
+    bstree_traverse_inorder(root, NULL, print_int);
+    printf("Removed %d\n", n);
+
+    n = 65536;
+    root = bstree_remove(root, &ops, &n);
+    bstree_traverse_inorder(root, NULL, print_int);
+    printf("Removed %d\n", n);
+
+    n = 3;
+    root = bstree_remove(root, &ops, &n);
+    bstree_traverse_inorder(root, NULL, print_int);
+    printf("Removed %d\n", n);
+
     bstree_destroy(root, &ops);
     return 0;
 }
