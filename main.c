@@ -50,18 +50,6 @@ double uniform_rnd(void)
     return (double)rand() / (double)RAND_MAX;
 }
 
-void fill_words(void *curr, void *words)
-{
-    struct word_arr *word_arr = words;
-    struct word *word = curr;
-    if (word_arr->last >= word_arr->capacity - 1) {
-        word_arr->capacity *= 2;
-        word_arr->arr =
-            realloc(word_arr->arr, word_arr->capacity * sizeof *word_arr->arr);
-    }
-    word_arr->arr[++word_arr->last] = word;
-}
-
 void choose_word(void *currp, void *choicep)
 {
     struct word *curr = currp;
