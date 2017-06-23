@@ -55,6 +55,12 @@ struct bstree_ops {
 struct bstree_node *bstree_insert(struct bstree_node *root,
         const struct bstree_ops *ops, void *object);
 
+/* Like insert, but instead of incrementing the count for an already existing
+ * object, it get rids of the old object, replaces it with the given one.
+ */
+struct bstree_node *bstree_replace(struct bstree_node *root,
+        const struct bstree_ops *ops, void *object);
+
 /* Destroy everything, ggwp.
  */
 void bstree_destroy(struct bstree_node *root, const struct bstree_ops *ops);

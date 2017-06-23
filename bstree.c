@@ -151,6 +151,31 @@ struct bstree_node *bstree_insert(struct bstree_node *root,
     return balance(root);
 }
 
+struct bstree_node *bstree_replace(struct bstree_node *root,
+        const struct bstree_ops *ops, void *object)
+{
+    if (!root) {
+        return mknode(object);
+    }
+    if (ops->compare_object(object, root->object) < 0) {
+        root->left = bstree_insert(root->left, ops, object);
+        return balance(root);
+    }
+    if (ops->compare_object(object, root->object) > 0) {
+        root->right = bstree_insert(root->right, ops, object);
+        return balance(root);
+    }
+    /* Inserting equal key. We are going to replace the existing object with
+     * the new one. We shall free the object if we have to (ops->free_object != NULL),
+     * then replace the pointer in the node.
+     */
+    if (ops->free_object) {
+        ops->free_object(root->object);
+    }
+    root->object = object;
+    return balance(root);
+}
+
 void bstree_destroy(struct bstree_node *root, const struct bstree_ops *ops)
 {
     if (!root) {
