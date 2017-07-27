@@ -110,6 +110,22 @@ static struct bstree_node *balance(struct bstree_node *root)
     return root;
 }
 
+static struct bstree_node *get_min(struct bstree_node *root)
+{
+    while (root && root->left) {
+        root = root->left;
+    }
+    return root;
+}
+
+static struct bstree_node *get_max(struct bstree_node *root)
+{
+    while (root && root->right) {
+        root = root->right;
+    }
+    return root;
+}
+
 struct bstree_node *bstree_insert(struct bstree_node *root,
         const struct bstree_ops *ops, void *object)
 {
@@ -132,6 +148,31 @@ struct bstree_node *bstree_insert(struct bstree_node *root,
     if (ops->free_object) {
         ops->free_object(object);
     }
+    return balance(root);
+}
+
+struct bstree_node *bstree_replace(struct bstree_node *root,
+        const struct bstree_ops *ops, void *object)
+{
+    if (!root) {
+        return mknode(object);
+    }
+    if (ops->compare_object(object, root->object) < 0) {
+        root->left = bstree_insert(root->left, ops, object);
+        return balance(root);
+    }
+    if (ops->compare_object(object, root->object) > 0) {
+        root->right = bstree_insert(root->right, ops, object);
+        return balance(root);
+    }
+    /* Inserting equal key. We are going to replace the existing object with
+     * the new one. We shall free the object if we have to (ops->free_object != NULL),
+     * then replace the pointer in the node.
+     */
+    if (ops->free_object) {
+        ops->free_object(root->object);
+    }
+    root->object = object;
     return balance(root);
 }
 
@@ -209,4 +250,43 @@ void *bstree_search(const struct bstree_node *root,
         return bstree_search(root->right, ops, key);
     }
     return root->object;
+}
+
+struct bstree_node *bstree_remove(struct bstree_node *root,
+        const struct bstree_ops *ops, const void *key)
+{
+    if (!root) {
+        return NULL;
+    }
+    if (ops->compare_object(key, root->object) < 0) {
+         root->left = bstree_remove(root->left, ops, key);
+         return balance(root);
+    }
+    if (ops->compare_object(key, root->object) > 0) {
+        root->right = bstree_remove(root->right, ops, key);
+        return balance(root);
+    }
+    /* Found the node to be deleted */
+    if (!root->left || !root->right) {
+        struct bstree_node *tmp = root->left ? root->left : root->right;
+        if (ops->free_object) {
+            ops->free_object(root->object);
+        }
+        free(root);
+        return tmp;
+    }
+    /* Node to be deleted has two children */
+    struct bstree_node *right_min = get_min(root->right);
+    /* As we get the pointer held at right_min and put it inside root, we shall
+     * remove right_min without free'ing the object it holds.
+     * For this reason, we call the remove function with a NULL free_object.
+     */
+    struct bstree_ops tmp_ops = *ops;
+    tmp_ops.free_object = NULL;
+    if (ops->free_object) {
+        ops->free_object(root->object);
+    }
+    root->object = right_min->object;
+    root->right = bstree_remove(root->right, &tmp_ops, right_min->object);
+    return balance(root);
 }

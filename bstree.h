@@ -19,6 +19,17 @@
 #ifndef BSTREE_H
 #define BSTREE_H
 
+/* Some notes:
+ ** We directly expose the node structure to the user, hiding nothing.
+ ** No duplicate keys will be present in the tree, inserting an already existing
+ * value will increase the count held at the node. Functions that have
+ * "cnt" as a suffix in their names operate considering the count at the found node,
+ * with details explained for each of them below.
+ ** The functions that modify the tree structure return the new root node
+ * of the tree. So calls should be made like: root = bstree_insert(root, ...
+ ** NULL represents an empty tree.
+ */
+
 struct bstree_node {
     void *object;
     struct bstree_node *left;
@@ -38,9 +49,20 @@ struct bstree_ops {
     void (*free_object)(void *object);
 };
 
+/* Inserts the given object to the tree. If the object already exists,
+ * increment the count.
+ */
 struct bstree_node *bstree_insert(struct bstree_node *root,
         const struct bstree_ops *ops, void *object);
 
+/* Like insert, but instead of incrementing the count for an already existing
+ * object, it get rids of the old object, replaces it with the given one.
+ */
+struct bstree_node *bstree_replace(struct bstree_node *root,
+        const struct bstree_ops *ops, void *object);
+
+/* Destroy everything, ggwp.
+ */
 void bstree_destroy(struct bstree_node *root, const struct bstree_ops *ops);
 
 /* Traverse the tree with a given operation, optionally accumulating
@@ -62,10 +84,22 @@ int bstree_traverse_inorder_cnt(const struct bstree_node *root,
         void *it_data,
         int (*operation)(void *object, void *it_data));
 
+/* Return the count of the given key.
+ */
 int bstree_count(const struct bstree_node *root, const struct bstree_ops *ops,
         const void *key);
 
+/* Return the pointer to the object matching the given key.
+ */
 void *bstree_search(const struct bstree_node *root, const struct bstree_ops *ops,
         const void *key);
+
+/* Finds and removes the node matching the given key.
+ * If the user wants the node removed but does not want the object to be free'd,
+ * he/she shall supply ops with ops->free_object set to NULL.
+ * Does nothing if the given key is not found in the tree.
+ */
+struct bstree_node *bstree_remove(struct bstree_node *root,
+        const struct bstree_ops *ops, const void *key);
 
 #endif

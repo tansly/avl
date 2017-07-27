@@ -5,7 +5,6 @@ improving it when I have free time once in a while.
 More information about usage and implementaion details will (may) come soon (or later).
 
 # TODO
-- Deletion operation
 - Preorder and postorder traversals
 - Document the usage a bit
 - Think about the design a bit and make sure it won't lead to dead ends
