@@ -39,11 +39,16 @@ void free_int(void *p)
     free(p);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 int print_int(void *ptr, void *it_data)
 {
     printf("%d\n", *(int *) ptr);
     return 0;
 }
+
+#pragma GCC diagnostic pop
 
 int sum_int(void *ptr, void *it_data)
 {
