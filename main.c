@@ -33,12 +33,6 @@ struct word {
     double cnt;
 };
 
-struct word_arr {
-    struct word **arr;
-    int capacity;
-    int last;
-};
-
 struct random_choice {
     struct word *word;
     double rnd;
