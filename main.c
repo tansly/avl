@@ -86,6 +86,9 @@ struct word *mkword(char *str, struct bstree_ops *ops)
     return w;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 int print_word(void *p, void *it_data)
 {
     struct word *w = p;
@@ -100,6 +103,8 @@ int print_tree(void *p, void *it_data)
     bstree_traverse_inorder(word->nextwords, NULL, print_word);
     return 0;
 }
+
+#pragma GCC diagnostic pop
 
 int sum_transition(void *p, void *it_data)
 {
@@ -116,6 +121,9 @@ int normalize_counts(void *p, void *it_data)
     return 0;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 int normalize_transitions(void *p, void *it_data)
 {
     struct word *word;
@@ -125,6 +133,8 @@ int normalize_transitions(void *p, void *it_data)
     bstree_traverse_inorder(word->nextwords, &sum, normalize_counts);
     return 0;
 }
+
+#pragma GCC diagnostic pop
 
 struct bstree_node *add_transition(struct bstree_node *root, struct bstree_ops *ops,
         char *curr, char *next)
@@ -166,7 +176,10 @@ int main(int argc, char **argv)
 
     srand(time(NULL));
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
     getline(&line, &len, stdin);
+#pragma GCC diagnostic pop
     *strrchr(line, '\n') = '\0';
 
     curr = strtok(line, " ");
