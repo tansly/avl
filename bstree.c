@@ -118,14 +118,6 @@ static struct bstree_node *get_min(struct bstree_node *root)
     return root;
 }
 
-static struct bstree_node *get_max(struct bstree_node *root)
-{
-    while (root && root->right) {
-        root = root->right;
-    }
-    return root;
-}
-
 struct bstree_node *bstree_insert(struct bstree_node *root,
         const struct bstree_ops *ops, void *object)
 {
