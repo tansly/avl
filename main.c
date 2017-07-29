@@ -18,6 +18,7 @@
 
 #include "bstree.h"
 
+#define _GNU_SOURCE
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,13 +74,14 @@ void free_word(void *p)
 {
     struct word *word = p;
     bstree_destroy(word->nextwords, word->ops);
+    free(word->str);
     free(word);
 }
 
 struct word *mkword(char *str, struct bstree_ops *ops)
 {
     struct word *w = malloc(sizeof *w);
-    w->str = str;
+    w->str = strdup(str);
     w->ops = ops;
     w->nextwords = NULL;
     w->cnt = 1;
@@ -167,7 +169,7 @@ int main(int argc, char **argv)
 
     char *line = NULL;
     size_t len = 0;
-    char *curr, *next;
+    char *curr = NULL, *next;
 
     struct word *initial;
     struct word key_word;
@@ -176,27 +178,32 @@ int main(int argc, char **argv)
 
     srand(time(NULL));
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-result"
-    getline(&line, &len, stdin);
-#pragma GCC diagnostic pop
-    *strrchr(line, '\n') = '\0';
-
-    curr = strtok(line, " ");
-    while ((next = strtok(NULL, " ")) != NULL) {
-        root = add_transition(root, &ops, curr, next);
-        curr = next;
+    while (getline(&line, &len, stdin) != EOF) {
+        *strchrnul(line, '\n') = '\0';
+        next = strtok(line, " ");
+        while (next) {
+            if (curr) {
+                root = add_transition(root, &ops, curr, next);
+                free(curr);
+            }
+            curr = strdup(next);
+            next = strtok(NULL, " ");
+        }
     }
-    root = add_transition(root, &ops, curr, line);
-    bstree_traverse_inorder(root, &ops, normalize_transitions);
-//    bstree_traverse_inorder(root, &ops, print_tree);
+    /* Add a transition from the last word to itself */
+    root = add_transition(root, &ops, curr, curr);
+    free(curr);
 
+    bstree_traverse_inorder(root, &ops, normalize_transitions);
+    //bstree_traverse_inorder(root, &ops, print_tree);
+
+    /* Set initial word */
     if (argc != 2) {
-        /* Choose first word of the input */
-        key_word.str = line;
+        key_word.str = ((struct word *)root->object)->str;
     } else {
         key_word.str = argv[1];
     }
+
     for (i = 0; i < OUT_LEN; i++) {
         initial = bstree_search(root, &ops, &key_word);
         assert(initial || (argc == 2 && i == 0));
