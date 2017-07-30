@@ -18,7 +18,6 @@
 
 #include "bstree.h"
 
-#define _GNU_SOURCE
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -168,7 +167,8 @@ int main(int argc, char **argv)
     struct bstree_ops ops = { cmp_word, free_word };
 
     char *line = NULL;
-    size_t len = 0;
+    size_t bufsize = 0;
+    ssize_t read_len;
     char *curr = NULL, *next;
 
     struct word *initial;
@@ -178,8 +178,10 @@ int main(int argc, char **argv)
 
     srand(time(NULL));
 
-    while (getline(&line, &len, stdin) != EOF) {
-        *strchrnul(line, '\n') = '\0';
+    while ((read_len = getline(&line, &bufsize, stdin)) != EOF) {
+        if (line[read_len - 1] == '\n') {
+            line[read_len - 1] = '\0';
+        }
         next = strtok(line, " ");
         while (next) {
             if (curr) {
