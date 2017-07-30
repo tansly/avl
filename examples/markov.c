@@ -19,10 +19,12 @@
 #include "bstree.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #define OUT_LEN 30
 
@@ -37,6 +39,11 @@ struct random_choice {
     struct word *word;
     double rnd;
     double sum;
+};
+
+struct options {
+    char *initial_word;
+    int out_len;
 };
 
 double uniform_rnd(void)
@@ -161,10 +168,43 @@ struct bstree_node *add_transition(struct bstree_node *root, struct bstree_ops *
     return root;
 }
 
+void print_usage_and_die(char **argv)
+{
+    fprintf(stderr, "Usage: %s [-l out_len] [-i initial_word]", argv[0]);
+    exit(EXIT_FAILURE);
+}
+
+void parse_opts(int argc, char **argv, struct options *opts)
+{
+    int opt;
+    opts->out_len = OUT_LEN;
+    opts->initial_word = NULL;
+    while ((opt = getopt(argc, argv, "l:i:")) != -1) {
+        switch (opt) {
+            case 'l':
+                opts->out_len = strtol(optarg, NULL, 10);
+                if (errno == EINVAL || errno == ERANGE) {
+                    print_usage_and_die(argv);
+                }
+                break;
+            case 'i':
+                if (!optarg) {
+                    print_usage_and_die(argv);
+                }
+                opts->initial_word = optarg;
+                break;
+            default:
+                print_usage_and_die(argv);
+        }
+    }
+}
+
 int main(int argc, char **argv)
 {
     struct bstree_node *root = NULL;
     struct bstree_ops ops = { cmp_word, free_word };
+
+    struct options cli_opts;
 
     char *line = NULL;
     size_t bufsize = 0;
@@ -175,6 +215,8 @@ int main(int argc, char **argv)
     struct word key_word;
 
     int i;
+
+    parse_opts(argc, argv, &cli_opts);
 
     srand(time(NULL));
 
@@ -200,14 +242,14 @@ int main(int argc, char **argv)
     //bstree_traverse_inorder(root, &ops, print_tree);
 
     /* Set initial word */
-    if (argc != 2) {
+    if (!cli_opts.initial_word) {
         key_word.str = ((struct word *)root->object)->str;
     } else {
-        key_word.str = argv[1];
+        key_word.str = cli_opts.initial_word;
     }
 
     int line_len;
-    for (i = 0, line_len = 0; i < OUT_LEN; i++) {
+    for (i = 0, line_len = 0; i < cli_opts.out_len; i++) {
         initial = bstree_search(root, &ops, &key_word);
         assert(initial || (argc == 2 && i == 0));
         if (line_len >= 80) {
