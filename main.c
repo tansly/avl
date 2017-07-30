@@ -204,10 +204,15 @@ int main(int argc, char **argv)
         key_word.str = argv[1];
     }
 
-    for (i = 0; i < OUT_LEN; i++) {
+    int line_len;
+    for (i = 0, line_len = 0; i < OUT_LEN; i++) {
         initial = bstree_search(root, &ops, &key_word);
         assert(initial || (argc == 2 && i == 0));
-        printf("%s ", initial->str);
+        if (line_len >= 80) {
+            putchar('\n');
+            line_len = 0;
+        }
+        line_len += printf("%s ", initial->str);
         key_word.str = choose_next(initial)->str;
     }
     putchar('\n');
