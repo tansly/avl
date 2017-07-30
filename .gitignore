@@ -39,3 +39,4 @@ tags
 *.swp
 
 testing/
+main.c
