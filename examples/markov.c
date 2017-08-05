@@ -46,6 +46,7 @@ struct options {
     char *delimiter;
     int out_len;
     int print_stats;
+    int wrap;
 };
 
 double uniform_rnd(void)
@@ -173,9 +174,10 @@ struct bstree_node *add_transition(struct bstree_node *root, struct bstree_ops *
 void print_usage(char **argv)
 {
     fprintf(stderr, "Usage: %s [-l out_len] [-i initial_word] [-t]\
-            [-d delimiter]\n", argv[0]);
+            [-d delimiter] [-w]\n", argv[0]);
     fprintf(stderr, "-t\tPrint the transition stats\n");
     fprintf(stderr, "-d delimiter\tWord delimiter string, default is space\n");
+    fprintf(stderr, "-w\tWrap output when longer than 80 characters\n");
 }
 
 /* Parse the command line options and place them in opts.
@@ -187,8 +189,9 @@ int parse_opts(int argc, char **argv, struct options *opts)
     opts->out_len = OUT_LEN;
     opts->initial_word = NULL;
     opts->print_stats = 0;
+    opts->wrap = 0;
     opts->delimiter = " ";
-    while ((opt = getopt(argc, argv, "l:i:d:t")) != -1) {
+    while ((opt = getopt(argc, argv, "l:i:d:tw")) != -1) {
         switch (opt) {
             case 'l':
                 opts->out_len = strtol(optarg, NULL, 10);
@@ -210,6 +213,9 @@ int parse_opts(int argc, char **argv, struct options *opts)
                     return 1;
                 }
                 opts->delimiter = optarg;
+                break;
+            case 'w':
+                opts->wrap = 1;
                 break;
             default:
                 return 1;
@@ -283,7 +289,7 @@ int main(int argc, char **argv)
     for (i = 0, line_len = 0; i < cli_opts.out_len; i++) {
         initial = bstree_search(root, &ops, &key_word);
         assert(initial || (argc == 2 && i == 0));
-        if (line_len >= 80) {
+        if (cli_opts.wrap && line_len >= 80) {
             putchar('\n');
             line_len = 0;
         }
