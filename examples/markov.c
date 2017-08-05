@@ -28,6 +28,19 @@
 
 #define OUT_LEN 30
 
+struct cli_opts {
+    char *initial_word;
+    char *delimiter;
+    int out_len;
+    int print_stats;
+    int wrap;
+};
+
+struct transition_table {
+    struct bstree_node *root;
+    struct bstree_ops ops;
+};
+
 struct word {
     char *str;
     struct bstree_node *nextwords;
@@ -41,20 +54,12 @@ struct random_choice {
     double sum;
 };
 
-struct options {
-    char *initial_word;
-    char *delimiter;
-    int out_len;
-    int print_stats;
-    int wrap;
-};
-
-double uniform_rnd(void)
+static double uniform_rnd(void)
 {
     return (double)rand() / (double)RAND_MAX;
 }
 
-int choose_word(void *currp, void *choicep)
+static int choose_word(void *currp, void *choicep)
 {
     struct word *curr = currp;
     struct random_choice *choice = choicep;
@@ -67,19 +72,19 @@ int choose_word(void *currp, void *choicep)
     }
 }
 
-struct word *choose_next(struct word *curr)
+static struct word *choose_next(struct word *curr)
 {
     struct random_choice choice = { NULL, uniform_rnd(), 0 };
     bstree_traverse_inorder(curr->nextwords, &choice, choose_word);
     return choice.word;
 }
 
-int cmp_word(const void *lhs, const void *rhs)
+static int cmp_word(const void *lhs, const void *rhs)
 {
     return strcmp(((struct word *)lhs)->str, ((struct word *)rhs)->str);
 }
 
-void free_word(void *p)
+static void free_word(void *p)
 {
     struct word *word = p;
     bstree_destroy(word->nextwords, word->ops);
@@ -87,7 +92,7 @@ void free_word(void *p)
     free(word);
 }
 
-struct word *mkword(char *str, struct bstree_ops *ops)
+static struct word *mkword(char *str, struct bstree_ops *ops)
 {
     struct word *w = malloc(sizeof *w);
     w->str = strdup(str);
@@ -100,14 +105,14 @@ struct word *mkword(char *str, struct bstree_ops *ops)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-int print_word(void *p, void *it_data)
+static int print_word(void *p, void *it_data)
 {
     struct word *w = p;
     printf("    %s : %.2f\n", w->str, w->cnt);
     return 0;
 }
 
-int print_tree(void *p, void *it_data)
+static int print_tree(void *p, void *it_data)
 {
     struct word *word = p;
     printf("%s\n", word->str);
@@ -117,15 +122,7 @@ int print_tree(void *p, void *it_data)
 
 #pragma GCC diagnostic pop
 
-int sum_transition(void *p, void *it_data)
-{
-    double *sum = it_data;
-    struct word *w = p;
-    *sum += w->cnt;
-    return 0;
-}
-
-int normalize_counts(void *p, void *it_data)
+static int normalize_counts(void *p, void *it_data)
 {
     struct word *word = p;
     word->cnt /= *(double *)it_data;
@@ -135,7 +132,7 @@ int normalize_counts(void *p, void *it_data)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-int normalize_transitions(void *p, void *it_data)
+static int normalize_transitions(void *p, void *it_data)
 {
     struct word *word;
     double sum;
@@ -147,7 +144,7 @@ int normalize_transitions(void *p, void *it_data)
 
 #pragma GCC diagnostic pop
 
-struct bstree_node *add_transition(struct bstree_node *root, struct bstree_ops *ops,
+static struct bstree_node *add_transition(struct bstree_node *root, struct bstree_ops *ops,
         char *curr, char *next)
 {
     struct word key;
@@ -171,7 +168,7 @@ struct bstree_node *add_transition(struct bstree_node *root, struct bstree_ops *
     return root;
 }
 
-void print_usage(char **argv)
+static void print_usage(char **argv)
 {
     fprintf(stderr, "Usage: %s [-l out_len] [-i initial_word] [-t]"
             " [-d delimiter] [-w]\n", argv[0]);
@@ -185,7 +182,7 @@ void print_usage(char **argv)
 /* Parse the command line options and place them in opts.
  * Returns 0 on succes, nonzero on failure.
  */
-int parse_opts(int argc, char **argv, struct options *opts)
+static int parse_opts(int argc, char **argv, struct cli_opts *opts)
 {
     int opt;
     opts->out_len = OUT_LEN;
@@ -226,81 +223,107 @@ int parse_opts(int argc, char **argv, struct options *opts)
     return 0;
 }
 
-int main(int argc, char **argv)
+static void generate_transition_table(struct transition_table *table,
+        struct cli_opts *opts)
 {
-    struct options cli_opts;
-
-    struct bstree_node *root;
-    struct bstree_ops ops;
-
-    struct word *initial;
-    struct word key_word;
-
     char *line;
     size_t bufsize;
     ssize_t read_len;
     char *curr, *next;
-
-    int i, line_len;
-
-    if (parse_opts(argc, argv, &cli_opts)) {
-        print_usage(argv);
-        return 1;
-    }
-
-    srand(time(NULL));
-
     /* Initialize the tree */
-    root = NULL;
-    ops.compare_object = cmp_word;
-    ops.free_object = free_word;
-
-    curr = NULL;
-    line = NULL;
-    bufsize = 0;
-    while ((read_len = getline(&line, &bufsize, stdin)) != EOF) {
+    table->root = NULL;
+    table->ops.compare_object = cmp_word;
+    table->ops.free_object = free_word;
+    for (curr = NULL, line = NULL, bufsize = 0;
+            (read_len = getline(&line, &bufsize, stdin)) != EOF; ) {
         if (line[read_len - 1] == '\n') {
             line[read_len - 1] = '\0';
         }
-        next = strtok(line, cli_opts.delimiter);
+        next = strtok(line, opts->delimiter);
         while (next) {
             if (curr) {
-                root = add_transition(root, &ops, curr, next);
+                table->root = add_transition(table->root, &table->ops, curr, next);
                 free(curr);
             }
             curr = strdup(next);
-            next = strtok(NULL, cli_opts.delimiter);
+            next = strtok(NULL, opts->delimiter);
         }
     }
+    if (!curr) {
+        /* Empty input */
+        free(line);
+        return;
+    }
     /* Add a transition from the last word to itself */
-    root = add_transition(root, &ops, curr, curr);
+    table->root = add_transition(table->root, &table->ops, curr, curr);
+    bstree_traverse_inorder(table->root, &table->ops, normalize_transitions);
     free(curr);
+    free(line);
+}
 
-    bstree_traverse_inorder(root, &ops, normalize_transitions);
-    if (cli_opts.print_stats) {
-        bstree_traverse_inorder(root, &ops, print_tree);
+static void print_transition_table(struct transition_table *table)
+{
+    bstree_traverse_inorder(table->root, &table->ops, print_tree);
+}
+
+static void generate_chain(struct transition_table *table,
+        struct cli_opts *opts)
+{
+    struct word *initial;
+    struct word key_word;
+    int i, line_len;
+    if (!table->root) {
+        /* Empty input */
+        return;
     }
-
     /* Set initial word */
-    if (!cli_opts.initial_word) {
-        key_word.str = ((struct word *)root->object)->str;
+    if (!opts->initial_word) {
+        key_word.str = ((struct word *)table->root->object)->str;
     } else {
-        key_word.str = cli_opts.initial_word;
+        key_word.str = opts->initial_word;
     }
-
-    for (i = 0, line_len = 0; i < cli_opts.out_len; i++) {
-        initial = bstree_search(root, &ops, &key_word);
-        assert(initial || (argc == 2 && i == 0));
-        if (cli_opts.wrap && line_len >= 80) {
+    for (i = 0, line_len = 0; i < opts->out_len; i++) {
+        initial = bstree_search(table->root, &table->ops, &key_word);
+        if (!initial) {
+            if (i == 0 && opts->initial_word) {
+                fprintf(stderr, "Initial word not found in dictionary."
+                        " Make sure you have supplied a word that really exists"
+                        " in the text.\n");
+            } else {
+                /* Oh, well... */
+                fprintf(stderr, "This error does not exist.\n");
+            }
+            break;
+        }
+        if (opts->wrap && line_len >= 80) {
             putchar('\n');
             line_len = 0;
         }
-        line_len += printf("%s%s", initial->str, cli_opts.delimiter);
+        line_len += printf("%s%s", initial->str, opts->delimiter);
         key_word.str = choose_next(initial)->str;
     }
     putchar('\n');
+}
 
-    bstree_destroy(root, &ops);
-    free(line);
+static void cleanup(struct transition_table *table)
+{
+    bstree_destroy(table->root, &table->ops);
+}
+
+int main(int argc, char **argv)
+{
+    struct transition_table table;
+    struct cli_opts opts;
+    if (parse_opts(argc, argv, &opts)) {
+        print_usage(argv);
+        return 1;
+    }
+    srand(time(NULL));
+    generate_transition_table(&table, &opts);
+    if (opts.print_stats) {
+        print_transition_table(&table);
+    }
+    generate_chain(&table, &opts);
+    cleanup(&table);
     return 0;
 }
