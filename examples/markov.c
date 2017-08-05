@@ -170,16 +170,18 @@ struct bstree_node *add_transition(struct bstree_node *root, struct bstree_ops *
     return root;
 }
 
-void print_usage_and_die(char **argv)
+void print_usage(char **argv)
 {
     fprintf(stderr, "Usage: %s [-l out_len] [-i initial_word] [-t]\
             [-d delimiter]\n", argv[0]);
     fprintf(stderr, "-t\tPrint the transition stats\n");
     fprintf(stderr, "-d delimiter\tWord delimiter string, default is space\n");
-    exit(EXIT_FAILURE);
 }
 
-void parse_opts(int argc, char **argv, struct options *opts)
+/* Parse the command line options and place them in opts.
+ * Returns 0 on succes, nonzero on failure.
+ */
+int parse_opts(int argc, char **argv, struct options *opts)
 {
     int opt;
     opts->out_len = OUT_LEN;
@@ -191,12 +193,12 @@ void parse_opts(int argc, char **argv, struct options *opts)
             case 'l':
                 opts->out_len = strtol(optarg, NULL, 10);
                 if (errno == EINVAL || errno == ERANGE) {
-                    print_usage_and_die(argv);
+                    return 1;
                 }
                 break;
             case 'i':
                 if (!optarg) {
-                    print_usage_and_die(argv);
+                    return 1;
                 }
                 opts->initial_word = optarg;
                 break;
@@ -205,37 +207,49 @@ void parse_opts(int argc, char **argv, struct options *opts)
                 break;
             case 'd':
                 if (!optarg) {
-                    print_usage_and_die(argv);
+                    return 1;
                 }
                 opts->delimiter = optarg;
                 break;
             default:
-                print_usage_and_die(argv);
+                return 1;
         }
     }
+    return 0;
 }
 
 int main(int argc, char **argv)
 {
-    struct bstree_node *root = NULL;
-    struct bstree_ops ops = { cmp_word, free_word };
-
     struct options cli_opts;
 
-    char *line = NULL;
-    size_t bufsize = 0;
-    ssize_t read_len;
-    char *curr = NULL, *next;
+    struct bstree_node *root;
+    struct bstree_ops ops;
 
     struct word *initial;
     struct word key_word;
 
-    int i;
+    char *line;
+    size_t bufsize;
+    ssize_t read_len;
+    char *curr, *next;
 
-    parse_opts(argc, argv, &cli_opts);
+    int i, line_len;
+
+    if (parse_opts(argc, argv, &cli_opts)) {
+        print_usage(argv);
+        return 1;
+    }
 
     srand(time(NULL));
 
+    /* Initialize the tree */
+    root = NULL;
+    ops.compare_object = cmp_word;
+    ops.free_object = free_word;
+
+    curr = NULL;
+    line = NULL;
+    bufsize = 0;
     while ((read_len = getline(&line, &bufsize, stdin)) != EOF) {
         if (line[read_len - 1] == '\n') {
             line[read_len - 1] = '\0';
@@ -266,7 +280,6 @@ int main(int argc, char **argv)
         key_word.str = cli_opts.initial_word;
     }
 
-    int line_len;
     for (i = 0, line_len = 0; i < cli_opts.out_len; i++) {
         initial = bstree_search(root, &ops, &key_word);
         assert(initial || (argc == 2 && i == 0));
