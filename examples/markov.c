@@ -43,6 +43,7 @@ struct random_choice {
 
 struct options {
     char *initial_word;
+    char *delimiter;
     int out_len;
     int print_stats;
 };
@@ -171,8 +172,10 @@ struct bstree_node *add_transition(struct bstree_node *root, struct bstree_ops *
 
 void print_usage_and_die(char **argv)
 {
-    fprintf(stderr, "Usage: %s [-l out_len] [-i initial_word] [-t]\n" argv[0]);
+    fprintf(stderr, "Usage: %s [-l out_len] [-i initial_word] [-t]\
+            [-d delimiter]\n", argv[0]);
     fprintf(stderr, "-t\tPrint the transition stats\n");
+    fprintf(stderr, "-d delimiter\tWord delimiter string, default is space\n");
     exit(EXIT_FAILURE);
 }
 
@@ -182,7 +185,8 @@ void parse_opts(int argc, char **argv, struct options *opts)
     opts->out_len = OUT_LEN;
     opts->initial_word = NULL;
     opts->print_stats = 0;
-    while ((opt = getopt(argc, argv, "l:i:t")) != -1) {
+    opts->delimiter = " ";
+    while ((opt = getopt(argc, argv, "l:i:d:t")) != -1) {
         switch (opt) {
             case 'l':
                 opts->out_len = strtol(optarg, NULL, 10);
@@ -198,6 +202,12 @@ void parse_opts(int argc, char **argv, struct options *opts)
                 break;
             case 't':
                 opts->print_stats = 1;
+                break;
+            case 'd':
+                if (!optarg) {
+                    print_usage_and_die(argv);
+                }
+                opts->delimiter = optarg;
                 break;
             default:
                 print_usage_and_die(argv);
@@ -230,14 +240,14 @@ int main(int argc, char **argv)
         if (line[read_len - 1] == '\n') {
             line[read_len - 1] = '\0';
         }
-        next = strtok(line, "\\");
+        next = strtok(line, cli_opts.delimiter);
         while (next) {
             if (curr) {
                 root = add_transition(root, &ops, curr, next);
                 free(curr);
             }
             curr = strdup(next);
-            next = strtok(NULL, "\\");
+            next = strtok(NULL, cli_opts.delimiter);
         }
     }
     /* Add a transition from the last word to itself */
@@ -264,7 +274,7 @@ int main(int argc, char **argv)
             putchar('\n');
             line_len = 0;
         }
-        line_len += printf("%s\n", initial->str);
+        line_len += printf("%s%s", initial->str, cli_opts.delimiter);
         key_word.str = choose_next(initial)->str;
     }
     putchar('\n');
