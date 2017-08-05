@@ -173,11 +173,13 @@ struct bstree_node *add_transition(struct bstree_node *root, struct bstree_ops *
 
 void print_usage(char **argv)
 {
-    fprintf(stderr, "Usage: %s [-l out_len] [-i initial_word] [-t]\
-            [-d delimiter] [-w]\n", argv[0]);
-    fprintf(stderr, "-t\tPrint the transition stats\n");
+    fprintf(stderr, "Usage: %s [-l out_len] [-i initial_word] [-t]"
+            " [-d delimiter] [-w]\n", argv[0]);
+    fprintf(stderr, "-l\t\tLength (in words) of the generated sequence\n");
+    fprintf(stderr, "-i\t\tInitial word of the sequence\n");
+    fprintf(stderr, "-t\t\tPrint the transition statistics\n");
     fprintf(stderr, "-d delimiter\tWord delimiter string, default is space\n");
-    fprintf(stderr, "-w\tWrap output when longer than 80 characters\n");
+    fprintf(stderr, "-w\t\tWrap output if longer than 80 characters\n");
 }
 
 /* Parse the command line options and place them in opts.
