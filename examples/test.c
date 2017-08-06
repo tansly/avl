@@ -113,6 +113,8 @@ int main(void)
     }
     free(elements.arr);
 
+    printf("height: %d\n", bstree_height(tree));
+
     puts("\nTesting remove function");
     bstree_traverse_inorder(tree, NULL, print_int);
     putchar('\n');
@@ -135,10 +137,12 @@ int main(void)
     for (n = 0; n < 100; n++) {
         bstree_remove(tree, &n);
     }
+    printf("height: %d\n", bstree_height(tree));
     bstree_traverse_inorder(tree, NULL, print_int);
     int *p = malloc(sizeof *p);
     *p = 7;
     bstree_insert(tree, p);
+    printf("height: %d\n", bstree_height(tree));
     bstree_traverse_inorder(tree, NULL, print_int);
 
     bstree_destroy(tree);

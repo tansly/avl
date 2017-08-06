@@ -381,3 +381,8 @@ int bstree_size(struct bstree *tree)
 {
     return size_(tree->root);
 }
+
+int bstree_height(struct bstree *tree)
+{
+    return height_(tree->root);
+}

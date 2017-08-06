@@ -85,4 +85,9 @@ void bstree_remove(struct bstree *tree, const void *key);
  */
 int bstree_size(struct bstree *tree);
 
+/* Return the length of the longest path from the root to a leaf.
+ * Empty tree has height -1, a tree consisting of a single node has height 0.
+ */
+int bstree_height(struct bstree *tree);
+
 #endif
