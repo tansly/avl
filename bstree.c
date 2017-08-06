@@ -25,6 +25,9 @@
 
 #define MAX_IMBALANCE 1
 
+/* Structs for internal usage
+ */
+
 struct bstree_node {
     void *object;
     struct bstree_node *left;
@@ -43,6 +46,9 @@ struct bstree_ops {
      */
     void (*free_object)(void *object);
 };
+
+/* Internal helper functions
+ */
 
 static int int_max_(int a, int b)
 {
@@ -171,11 +177,11 @@ static struct bstree_node *replace_(struct bstree_node *root,
         return mknode_(object);
     }
     if (ops->compare_object(object, root->object) < 0) {
-        root->left = insert_(root->left, ops, object);
+        root->left = replace_(root->left, ops, object);
         return balance_(root);
     }
     if (ops->compare_object(object, root->object) > 0) {
-        root->right = insert_(root->right, ops, object);
+        root->right = replace_(root->right, ops, object);
         return balance_(root);
     }
     /* Inserting equal key. We are going to replace the existing object with
@@ -310,6 +316,9 @@ static int size_(struct bstree_node *root)
     }
     return size_(root->left) + size_(root->right) + 1;
 }
+
+/* Interface functions
+ */
 
 struct bstree *bstree_new(
         int (*compare_object)(const void *lhs, const void *rhs),
