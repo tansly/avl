@@ -79,8 +79,7 @@ int mk_array(void *ptr, void *it_data)
 
 int main(void)
 {
-    struct bstree_node *root = NULL;
-    struct bstree_ops ops = { cmp_int, free_int };
+    struct bstree *tree = bstree_new(cmp_int, free_int);
     int *arr[ARR_SIZE];
     int i, sum = 0;
     struct int_arr elements = { malloc(sizeof(int)), -1, 1 };
@@ -91,24 +90,23 @@ int main(void)
     }
     putchar('\n');
     for (i = 0; i < ARR_SIZE; i++) {
-        root = bstree_insert(root, &ops, arr[i]);
+        bstree_insert(tree, arr[i]);
         arr[i] = NULL;
     }
-    bstree_traverse_inorder(root, NULL, print_int);
-    bstree_traverse_inorder(root, &sum, sum_int);
-    printf("\nheight = %d\n", root->height);
+    bstree_traverse_inorder(tree, NULL, print_int);
+    bstree_traverse_inorder(tree, &sum, sum_int);
     printf("\nsum = %d\n", sum);
     sum = 0;
-    bstree_traverse_inorder(root, &sum, sum_int_lt_5);
+    bstree_traverse_inorder(tree, &sum, sum_int_lt_5);
     printf("\nsum lt 10 = %d\n", sum);
-    bstree_traverse_inorder(root, &elements, mk_array);
+    bstree_traverse_inorder(tree, &elements, mk_array);
     int n = 3;
-    printf("count of 3 = %d\n", bstree_count(root, &ops, &n));
+    printf("count of 3 = %d\n", bstree_count(tree, &n));
     for (i = 0; i <= elements.last; i++) {
         printf("elements.arr[%d] = %d\n", i, elements.arr[i]);
     }
     elements.last = -1;
-    bstree_traverse_inorder_cnt(root, &elements, mk_array);
+    bstree_traverse_inorder_cnt(tree, &elements, mk_array);
     putchar('\n');
     for (i = 0; i <= elements.last; i++) {
         printf("elements.arr[%d] = %d\n", i, elements.arr[i]);
@@ -116,24 +114,33 @@ int main(void)
     free(elements.arr);
 
     puts("\nTesting remove function");
-    bstree_traverse_inorder(root, NULL, print_int);
+    bstree_traverse_inorder(tree, NULL, print_int);
     putchar('\n');
 
     n = 5;
-    root = bstree_remove(root, &ops, &n);
-    bstree_traverse_inorder(root, NULL, print_int);
+    bstree_remove(tree, &n);
+    bstree_traverse_inorder(tree, NULL, print_int);
     printf("Removed %d\n", n);
 
     n = 65536;
-    root = bstree_remove(root, &ops, &n);
-    bstree_traverse_inorder(root, NULL, print_int);
+    bstree_remove(tree, &n);
+    bstree_traverse_inorder(tree, NULL, print_int);
     printf("Removed %d\n", n);
 
     n = 3;
-    root = bstree_remove(root, &ops, &n);
-    bstree_traverse_inorder(root, NULL, print_int);
+    bstree_remove(tree, &n);
+    bstree_traverse_inorder(tree, NULL, print_int);
     printf("Removed %d\n", n);
 
-    bstree_destroy(root, &ops);
+    for (n = 0; n < 100; n++) {
+        bstree_remove(tree, &n);
+    }
+    bstree_traverse_inorder(tree, NULL, print_int);
+    int *p = malloc(sizeof *p);
+    *p = 7;
+    bstree_insert(tree, p);
+    bstree_traverse_inorder(tree, NULL, print_int);
+
+    bstree_destroy(tree);
     return 0;
 }

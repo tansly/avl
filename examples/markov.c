@@ -36,15 +36,9 @@ struct cli_opts {
     int wrap;
 };
 
-struct transition_table {
-    struct bstree_node *root;
-    struct bstree_ops ops;
-};
-
 struct word {
     char *str;
-    struct bstree_node *nextwords;
-    struct bstree_ops *ops;
+    struct bstree *nextwords;
     double cnt;
 };
 
@@ -87,17 +81,16 @@ static int cmp_word(const void *lhs, const void *rhs)
 static void free_word(void *p)
 {
     struct word *word = p;
-    bstree_destroy(word->nextwords, word->ops);
+    bstree_destroy(word->nextwords);
     free(word->str);
     free(word);
 }
 
-static struct word *mkword(char *str, struct bstree_ops *ops)
+static struct word *mkword(char *str)
 {
     struct word *w = malloc(sizeof *w);
     w->str = strdup(str);
-    w->ops = ops;
-    w->nextwords = NULL;
+    w->nextwords = bstree_new(cmp_word, free_word);
     w->cnt = 1;
     return w;
 }
@@ -144,33 +137,31 @@ static int normalize_transitions(void *p, void *it_data)
 
 #pragma GCC diagnostic pop
 
-static struct bstree_node *add_transition(struct bstree_node *root, struct bstree_ops *ops,
-        char *curr, char *next)
+static void add_transition(struct bstree *table, char *curr, char *next)
 {
     struct word key;
     struct word *word, *nextword;
     key.str = curr;
-    word = bstree_search(root, ops, &key);
+    word = bstree_search(table, &key);
     if (!word) {
-        word = mkword(curr, ops);
-        root = bstree_insert(root, ops, word);
+        word = mkword(curr);
+        bstree_insert(table, word);
     } else {
         word->cnt++;
     }
     key.str = next;
-    nextword = bstree_search(word->nextwords, word->ops, &key);
+    nextword = bstree_search(word->nextwords, &key);
     if (!nextword) {
-        nextword = mkword(next, ops);
-        word->nextwords = bstree_insert(word->nextwords, ops, nextword);
+        nextword = mkword(next);
+        bstree_insert(word->nextwords, nextword);
     } else {
         nextword->cnt++;
     }
-    return root;
 }
 
 static void print_usage(char **argv)
 {
-    fprintf(stderr, "Usage: %s [-l out_len] [-i initial_word] [-t]"
+    fprintf(stderr, "Usage: %s -i initial_word [-l out_len] [-t]"
             " [-d delimiter] [-w]\n", argv[0]);
     fprintf(stderr, "-l\t\tLength (in words) of the generated sequence\n");
     fprintf(stderr, "-i\t\tInitial word of the sequence\n");
@@ -220,20 +211,18 @@ static int parse_opts(int argc, char **argv, struct cli_opts *opts)
                 return 1;
         }
     }
-    return 0;
+    /* If there is no initial word set, we fail */
+    return !opts->initial_word;
 }
 
-static void generate_transition_table(struct transition_table *table,
-        struct cli_opts *opts)
+static struct bstree *generate_transition_table(struct cli_opts *opts)
 {
     char *line;
     size_t bufsize;
     ssize_t read_len;
     char *curr, *next;
-    /* Initialize the tree */
-    table->root = NULL;
-    table->ops.compare_object = cmp_word;
-    table->ops.free_object = free_word;
+    struct bstree *table;
+    table = bstree_new(cmp_word, free_word);
     for (curr = NULL, line = NULL, bufsize = 0;
             (read_len = getline(&line, &bufsize, stdin)) != EOF; ) {
         if (line[read_len - 1] == '\n') {
@@ -242,7 +231,7 @@ static void generate_transition_table(struct transition_table *table,
         next = strtok(line, opts->delimiter);
         while (next) {
             if (curr) {
-                table->root = add_transition(table->root, &table->ops, curr, next);
+                add_transition(table, curr, next);
                 free(curr);
             }
             curr = strdup(next);
@@ -252,38 +241,33 @@ static void generate_transition_table(struct transition_table *table,
     if (!curr) {
         /* Empty input */
         free(line);
-        return;
+        return table;
     }
     /* Add a transition from the last word to itself */
-    table->root = add_transition(table->root, &table->ops, curr, curr);
-    bstree_traverse_inorder(table->root, &table->ops, normalize_transitions);
+    add_transition(table, curr, curr);
+    bstree_traverse_inorder(table, NULL, normalize_transitions);
     free(curr);
     free(line);
+    return table;
 }
 
-static void print_transition_table(struct transition_table *table)
+static void print_transition_table(struct bstree *table)
 {
-    bstree_traverse_inorder(table->root, &table->ops, print_tree);
+    bstree_traverse_inorder(table, NULL, print_tree);
 }
 
-static void generate_chain(struct transition_table *table,
-        struct cli_opts *opts)
+static void generate_chain(struct bstree *table, struct cli_opts *opts)
 {
     struct word *initial;
     struct word key_word;
     int i, line_len;
-    if (!table->root) {
+    if (bstree_size(table) == 0) {
         /* Empty input */
         return;
     }
-    /* Set initial word */
-    if (!opts->initial_word) {
-        key_word.str = ((struct word *)table->root->object)->str;
-    } else {
-        key_word.str = opts->initial_word;
-    }
+    key_word.str = opts->initial_word;
     for (i = 0, line_len = 0; i < opts->out_len; i++) {
-        initial = bstree_search(table->root, &table->ops, &key_word);
+        initial = bstree_search(table, &key_word);
         if (!initial) {
             if (i == 0 && opts->initial_word) {
                 fprintf(stderr, "Initial word not found in dictionary."
@@ -305,25 +289,20 @@ static void generate_chain(struct transition_table *table,
     putchar('\n');
 }
 
-static void cleanup(struct transition_table *table)
-{
-    bstree_destroy(table->root, &table->ops);
-}
-
 int main(int argc, char **argv)
 {
-    struct transition_table table;
+    struct bstree *table;
     struct cli_opts opts;
     if (parse_opts(argc, argv, &opts)) {
         print_usage(argv);
         return 1;
     }
     srand(time(NULL));
-    generate_transition_table(&table, &opts);
+    table = generate_transition_table(&opts);
     if (opts.print_stats) {
-        print_transition_table(&table);
+        print_transition_table(table);
     }
-    generate_chain(&table, &opts);
-    cleanup(&table);
+    generate_chain(table, &opts);
+    bstree_destroy(table);
     return 0;
 }
