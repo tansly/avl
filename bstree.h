@@ -1,6 +1,6 @@
 /*
     Generic AVL tree implementation in C
-    Copyright (C) 2017 Yagmur Oymak
+    Copyright (C) 2017 Yağmur Oymak, Berk Özkütük
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ void bstree_replace(struct bstree *tree, void *object);
  */
 void bstree_destroy(struct bstree *tree);
 
-/* Traverse the tree with a given operation, optionally accumulating
+/* Traverse (in-order) the tree with a given operation, optionally accumulating
  * data in it_data. 'operation' must point to a valid function.
  * Usage of it_data is up to the operation function given by the user.
  * It is not used anywhere by us.
@@ -57,10 +57,47 @@ void bstree_destroy(struct bstree *tree);
 int bstree_traverse_inorder(const struct bstree *tree, void *it_data,
         int (*operation)(void *object, void *it_data));
 
-/* Traverse the tree in a similar fashion, but apply the operation 'count' times
- * for each object, 'count' being the count of the object held in the tree.
+/* Traverse (pre-order) the tree with a given operation, optionally
+ * accumulating data in it_data. 'operation' must point to a valid function.
+ * Usage of it_data is up to the operation function given by the user.
+ * It is not used anywhere by us.
+ * Traversal is stopped when the operation returns true.
+ * Returns true if traversal is stopped by the operation function,
+ * else false (traversal is finished by visiting all nodes).
+ */
+int bstree_traverse_preorder(const struct bstree *tree, void *it_data,
+        int (*operation)(void *object, void *it_data));
+
+/* Traverse (post-order) the tree with a given operation, optionally
+ * accumulating data in it_data. 'operation' must point to a valid function.
+ * Usage of it_data is up to the operation function given by the user.
+ * It is not used anywhere by us.
+ * Traversal is stopped when the operation returns true.
+ * Returns true if traversal is stopped by the operation function,
+ * else false (traversal is finished by visiting all nodes).
+ */
+int bstree_traverse_postorder(const struct bstree *tree, void *it_data,
+        int (*operation)(void *object, void *it_data));
+
+/* Traverse (in-order) the tree in a similar fashion, but apply the operation
+ * 'count' times * for each object, 'count' being the count of the object held
+ * in the tree.
  */
 int bstree_traverse_inorder_cnt(const struct bstree *tree, void *it_data,
+        int (*operation)(void *object, void *it_data));
+
+/* Traverse (pre-order) the tree in a similar fashion, but apply the operation
+ * 'count' times for each object, 'count' being the count of the object held
+ * in the tree.
+ */
+int bstree_traverse_preorder_cnt(const struct bstree *tree, void *it_data,
+        int (*operation)(void *object, void *it_data));
+
+/* Traverse (post-order) the tree in a similar fashion, but apply the operation
+ * 'count' times for each object, 'count' being the count of the object held
+ * in the tree.
+ */
+int bstree_traverse_postorder_cnt(const struct bstree *tree, void *it_data,
         int (*operation)(void *object, void *it_data));
 
 /* Return the count of the given key.

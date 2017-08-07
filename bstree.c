@@ -1,6 +1,6 @@
 /*
     Generic AVL tree implementation in C
-    Copyright (C) 2017 Yagmur Oymak
+    Copyright (C) 2017 Yağmur Oymak, Berk Özkütük
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -187,8 +187,8 @@ static struct bstree_node *replace_(struct bstree_node *root,
         return balance_(root);
     }
     /* Inserting equal key. We are going to replace the existing object with
-     * the new one. We shall free the object if we have to (ops->free_object != NULL),
-     * then replace the pointer in the node.
+     * the new one. We shall free the object if we have to
+     * (ops->free_object != NULL), then replace the pointer in the node.
      */
     if (ops->free_object) {
         ops->free_object(root->object);
@@ -210,7 +210,8 @@ static void destroy_(struct bstree_node *root, const struct bstree_ops *ops)
     free(root);
 }
 
-static int traverse_inorder_(const struct bstree_node *root, void *it_data,
+static int traverse_inorder_(const struct bstree_node *root,
+        void *it_data,
         int (*operation)(void *object, void *it_data))
 {
     return
@@ -218,6 +219,28 @@ static int traverse_inorder_(const struct bstree_node *root, void *it_data,
         (traverse_inorder_(root->left, it_data, operation) ||
         operation(root->object, it_data) ||
         traverse_inorder_(root->right, it_data, operation));
+}
+
+static int traverse_preorder_(const struct bstree_node *root,
+        void *it_data,
+        int (*operation)(void *object, void *it_data))
+{
+    return
+        root &&
+        (operation(root->object, it_data) ||
+        traverse_preorder_(root->left, it_data, operation) ||
+        traverse_preorder_(root->right, it_data, operation));
+}
+
+static int traverse_postorder_(const struct bstree_node *root,
+        void *it_data,
+        int (*operation)(void *object, void *it_data))
+{
+    return
+        root &&
+        (traverse_postorder_(root->left, it_data, operation) ||
+        traverse_postorder_(root->right, it_data, operation) ||
+        operation(root->object, it_data));
 }
 
 static int traverse_inorder_cnt_(const struct bstree_node *root,
@@ -238,6 +261,50 @@ static int traverse_inorder_cnt_(const struct bstree_node *root,
     }
     if (traverse_inorder_cnt_(root->right, it_data, operation)) {
         return 1;
+    }
+    return 0;
+}
+
+static int traverse_preorder_cnt_(const struct bstree_node *root,
+        void *it_data,
+        int (*operation)(void *object, void *it_data))
+{
+    int i;
+    if (!root) {
+        return 0;
+    }
+    for (i = 0; i < root->count; i++) {
+        if (operation(root->object, it_data)) {
+            return 1;
+        }
+    }
+    if (traverse_preorder_cnt_(root->left, it_data, operation)) {
+        return 1;
+    }
+    if (traverse_preorder_cnt_(root->right, it_data, operation)) {
+        return 1;
+    }
+    return 0;
+}
+
+static int traverse_postorder_cnt_(const struct bstree_node *root,
+        void *it_data,
+        int (*operation)(void *object, void *it_data))
+{
+    int i;
+    if (!root) {
+        return 0;
+    }
+    if (traverse_postorder_cnt_(root->left, it_data, operation)) {
+        return 1;
+    }
+    if (traverse_postorder_cnt_(root->right, it_data, operation)) {
+        return 1;
+    }
+    for (i = 0; i < root->count; i++) {
+        if (operation(root->object, it_data)) {
+            return 1;
+        }
     }
     return 0;
 }
@@ -358,10 +425,34 @@ int bstree_traverse_inorder(const struct bstree *tree, void *it_data,
     return traverse_inorder_(tree->root, it_data, operation);
 }
 
+int bstree_traverse_preorder(const struct bstree *tree, void *it_data,
+        int (*operation)(void *object, void *it_data))
+{
+    return traverse_preorder_(tree->root, it_data, operation);
+}
+
+int bstree_traverse_postorder(const struct bstree *tree, void *it_data,
+        int (*operation)(void *object, void *it_data))
+{
+    return traverse_postorder_(tree->root, it_data, operation);
+}
+
 int bstree_traverse_inorder_cnt(const struct bstree *tree, void *it_data,
         int (*operation)(void *object, void *it_data))
 {
     return traverse_inorder_cnt_(tree->root, it_data, operation);
+}
+
+int bstree_traverse_preorder_cnt(const struct bstree *tree, void *it_data,
+        int (*operation)(void *object, void *it_data))
+{
+    return traverse_preorder_cnt_(tree->root, it_data, operation);
+}
+
+int bstree_traverse_postorder_cnt(const struct bstree *tree, void *it_data,
+        int (*operation)(void *object, void *it_data))
+{
+    return traverse_postorder_cnt_(tree->root, it_data, operation);
 }
 
 int bstree_count(const struct bstree *tree, const void *key)

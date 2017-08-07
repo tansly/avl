@@ -1,6 +1,6 @@
 /*
     Generic AVL tree implementation in C
-    Copyright (C) 2017 Yagmur Oymak
+    Copyright (C) 2017 Yağmur Oymak, Berk Özkütük
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ int main(void)
 {
     struct bstree *tree = bstree_new(cmp_int, free_int);
     int *arr[ARR_SIZE];
-    int i, sum = 0;
+    int i, sum;
     struct int_arr elements = { malloc(sizeof(int)), -1, 1 };
     for (i = 0; i < ARR_SIZE; i++) {
         arr[i] = malloc(sizeof(int));
@@ -93,50 +93,63 @@ int main(void)
         bstree_insert(tree, arr[i]);
         arr[i] = NULL;
     }
+    /* Test count function */
+    int n = 3;
+    printf("count of 3 = %d\n", bstree_count(tree, &n));
+    /* inorder print */
+    puts("Print inorder");
     bstree_traverse_inorder(tree, NULL, print_int);
+    putchar('\n');
+    /* preorder print */
+    puts("Print preorder");
+    bstree_traverse_preorder(tree, NULL, print_int);
+    putchar('\n');
+    /* postorder print */
+    puts("Print postorder");
+    bstree_traverse_postorder(tree, NULL, print_int);
+    putchar('\n');
+    /* Traversal test with accumulators */
+    sum = 0;
     bstree_traverse_inorder(tree, &sum, sum_int);
     printf("\nsum = %d\n", sum);
     sum = 0;
     bstree_traverse_inorder(tree, &sum, sum_int_lt_5);
     printf("\nsum lt 10 = %d\n", sum);
+    /* Fill elements in an array */
     bstree_traverse_inorder(tree, &elements, mk_array);
-    int n = 3;
-    printf("count of 3 = %d\n", bstree_count(tree, &n));
     for (i = 0; i <= elements.last; i++) {
         printf("elements.arr[%d] = %d\n", i, elements.arr[i]);
     }
     elements.last = -1;
+    /* This time considering counts */
     bstree_traverse_inorder_cnt(tree, &elements, mk_array);
     putchar('\n');
     for (i = 0; i <= elements.last; i++) {
         printf("elements.arr[%d] = %d\n", i, elements.arr[i]);
     }
     free(elements.arr);
-
-    printf("height: %d\n", bstree_height(tree));
-
+    /* Test removal function and height of the tree */
     puts("\nTesting remove function");
+    printf("height: %d\n", bstree_height(tree));
     bstree_traverse_inorder(tree, NULL, print_int);
     putchar('\n');
-
     n = 5;
     bstree_remove(tree, &n);
     bstree_traverse_inorder(tree, NULL, print_int);
     printf("Removed %d\n", n);
-
     n = 65536;
     bstree_remove(tree, &n);
     bstree_traverse_inorder(tree, NULL, print_int);
     printf("Removed %d\n", n);
-
     n = 3;
     bstree_remove(tree, &n);
     bstree_traverse_inorder(tree, NULL, print_int);
     printf("Removed %d\n", n);
-
+    printf("height: %d\n", bstree_height(tree));
     for (n = 0; n < 100; n++) {
         bstree_remove(tree, &n);
     }
+    printf("Removed from [0, 100)\n");
     printf("height: %d\n", bstree_height(tree));
     bstree_traverse_inorder(tree, NULL, print_int);
     int *p = malloc(sizeof *p);
@@ -144,7 +157,6 @@ int main(void)
     bstree_insert(tree, p);
     printf("height: %d\n", bstree_height(tree));
     bstree_traverse_inorder(tree, NULL, print_int);
-
     bstree_destroy(tree);
     return 0;
 }
