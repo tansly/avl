@@ -108,9 +108,7 @@ int bstree_count(const struct bstree *tree, const void *key);
  */
 void *bstree_search(const struct bstree *tree, const void *key);
 
-/* Finds and removes the node matching the given key.
- * If the user wants the node removed but does not want the object to be free'd,
- * he/she shall supply ops with ops->free_object set to NULL.
+/* Finds and removes the node matching the given key and frees the object.
  * Does nothing if the given key is not found in the tree.
  */
 void bstree_remove(struct bstree *tree, const void *key);
