@@ -200,6 +200,28 @@ int bstree_traverse_inorder(const struct bstree_node *root,
         bstree_traverse_inorder(root->right, it_data, operation));
 }
 
+int bstree_traverse_preorder(const struct bstree_node *root,
+        void *it_data,
+        int (*operation)(void *object, void *it_data))
+{
+    return
+        root &&
+        (operation(root->object, it_data) ||
+        bstree_traverse_preorder(root->left, it_data, operation) ||
+        bstree_traverse_preorder(root->right, it_data, operation));
+}
+
+int bstree_traverse_postorder(const struct bstree_node *root,
+        void *it_data,
+        int (*operation)(void *object, void *it_data))
+{
+    return
+        root &&
+        (bstree_traverse_postorder(root->left, it_data, operation) ||
+        bstree_traverse_postorder(root->right, it_data, operation) ||
+        operation(root->object, it_data));
+}
+
 int bstree_traverse_inorder_cnt(const struct bstree_node *root,
         void *it_data,
         int (*operation)(void *object, void *it_data))
@@ -218,6 +240,50 @@ int bstree_traverse_inorder_cnt(const struct bstree_node *root,
     }
     if (bstree_traverse_inorder_cnt(root->right, it_data, operation)) {
         return 1;
+    }
+    return 0;
+}
+
+int bstree_traverse_preorder_cnt(const struct bstree_node *root,
+        void *it_data,
+        int (*operation)(void *object, void *it_data))
+{
+    int i;
+    if (!root) {
+        return 0;
+    }
+    for (i = 0; i < root->count; i++) {
+        if (operation(root->object, it_data)) {
+            return 1;
+        }
+    }
+    if (bstree_traverse_preorder_cnt(root->left, it_data, operation)) {
+        return 1;
+    }
+    if (bstree_traverse_preorder_cnt(root->right, it_data, operation)) {
+        return 1;
+    }
+    return 0;
+}
+
+int bstree_traverse_postorder_cnt(const struct bstree_node *root,
+        void *it_data,
+        int (*operation)(void *object, void *it_data))
+{
+    int i;
+    if (!root) {
+        return 0;
+    }
+    if (bstree_traverse_postorder_cnt(root->left, it_data, operation)) {
+        return 1;
+    }
+    if (bstree_traverse_postorder_cnt(root->right, it_data, operation)) {
+        return 1;
+    }
+    for (i = 0; i < root->count; i++) {
+        if (operation(root->object, it_data)) {
+            return 1;
+        }
     }
     return 0;
 }

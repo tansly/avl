@@ -89,7 +89,19 @@ int main(void)
         root = bstree_insert(root, &ops, arr[i]);
         arr[i] = NULL;
     }
+
+    /* inorder print */
     bstree_traverse_inorder(root, NULL, print_int);
+    putchar('\n');
+
+    /* preorder print */
+    bstree_traverse_preorder(root, NULL, print_int);
+    putchar('\n');
+
+    /* postorder print */
+    bstree_traverse_preorder(root, NULL, print_int);
+    putchar('\n');
+
     bstree_traverse_inorder(root, &sum, sum_int);
     printf("\nheight = %d\n", root->height);
     printf("\nsum = %d\n", sum);
