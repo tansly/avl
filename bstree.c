@@ -25,9 +25,6 @@
 
 #define MAX_IMBALANCE 1
 
-/* Structs for internal usage
- */
-
 struct bstree_node {
     void *object;
     struct bstree_node *left;
@@ -45,6 +42,11 @@ struct bstree_ops {
      * objects and never free them, that means the user manages the lifetime.
      */
     void (*free_object)(void *object);
+};
+
+struct bstree {
+    struct bstree_node *root;
+    struct bstree_ops *ops;
 };
 
 /* Internal helper functions

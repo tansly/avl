@@ -26,10 +26,7 @@
  * found node, with details explained for each of them below.
  */
 
-struct bstree {
-    struct bstree_node *root;
-    struct bstree_ops *ops;
-};
+struct bstree;
 
 struct bstree *bstree_new(
         int (*compare_object)(const void *lhs, const void *rhs),
