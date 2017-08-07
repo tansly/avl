@@ -113,6 +113,11 @@ void *bstree_search(const struct bstree *tree, const void *key);
  */
 void bstree_remove(struct bstree *tree, const void *key);
 
+/* Finds and removes the node matching the given key but does not free
+ * the object. Does nothing if the given key is not found in the tree.
+ */
+void bstree_release(struct bstree *tree, const void *key);
+
 /* Return the number of nodes in the tree.
  */
 int bstree_size(struct bstree *tree);

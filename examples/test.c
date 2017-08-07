@@ -155,8 +155,14 @@ int main(void)
     int *p = malloc(sizeof *p);
     *p = 7;
     bstree_insert(tree, p);
+    p = NULL;
     printf("height: %d\n", bstree_height(tree));
     bstree_traverse_inorder(tree, NULL, print_int);
+    n = 7;
+    p = bstree_search(tree, &n);
+    bstree_release(tree, &n);
+    printf("found %d\n", *p);
+    free(p);
     bstree_destroy(tree);
     return 0;
 }

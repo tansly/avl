@@ -339,6 +339,9 @@ static void *search_(const struct bstree_node *root,
     return root->object;
 }
 
+/* Removes the node matching the key,
+ * frees the object if ops->free_object is not NULL.
+ */
 static struct bstree_node *remove_(struct bstree_node *root,
         const struct bstree_ops *ops, const void *key)
 {
@@ -468,6 +471,13 @@ void *bstree_search(const struct bstree *tree, const void *key)
 void bstree_remove(struct bstree *tree, const void *key)
 {
     tree->root = remove_(tree->root, tree->ops, key);
+}
+
+void bstree_release(struct bstree *tree, const void *key)
+{
+    struct bstree_ops tmp_ops = *tree->ops;
+    tmp_ops.free_object = NULL;
+    tree->root = remove_(tree->root, &tmp_ops, key);
 }
 
 int bstree_size(struct bstree *tree)
