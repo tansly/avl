@@ -38,7 +38,7 @@ struct bstree *bstree_new(
 void bstree_insert(struct bstree *tree, void *object);
 
 /* Like insert, but instead of incrementing the count for an already existing
- * object, it get rids of the old object, replaces it with the given one.
+ * object, it gets rid of the old object, replaces it with the given one.
  */
 void bstree_replace(struct bstree *tree, void *object);
 
