@@ -31,7 +31,7 @@
 struct cli_opts {
     char *initial_word;
     char *delimiter;
-    int out_len;
+    unsigned long out_len;
     int print_stats;
     int wrap;
 };
@@ -184,7 +184,7 @@ static int parse_opts(int argc, char **argv, struct cli_opts *opts)
     while ((opt = getopt(argc, argv, "l:i:d:tw")) != -1) {
         switch (opt) {
             case 'l':
-                opts->out_len = strtol(optarg, NULL, 10);
+                opts->out_len = strtoul(optarg, NULL, 10);
                 if (errno == EINVAL || errno == ERANGE) {
                     return 1;
                 }
@@ -260,7 +260,7 @@ static void generate_chain(struct bstree *table, struct cli_opts *opts)
 {
     struct word *initial;
     struct word key_word;
-    int i, line_len;
+    unsigned long i, line_len;
     if (bstree_size(table) == 0) {
         /* Empty input */
         return;
