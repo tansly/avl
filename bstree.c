@@ -327,14 +327,11 @@ static const struct bstree_node *search_(const struct bstree_node *root,
 static int count_(const struct bstree_node *root,
         const struct bstree_ops *ops, const void *object)
 {
-    if (!root) {
-        return NULL;
-    }
-    if (ops->compare_object(key, root->object) < 0) {
-        return search_(root->left, ops, key);
-    }
-    if (ops->compare_object(key, root->object) > 0) {
-        return search_(root->right, ops, key);
+    root = search_(root, ops, object);
+    if (root) {
+        return root->count;
+    } else {
+        return 0;
     }
 }
 
