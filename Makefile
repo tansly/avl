@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -std=gnu11 -pedantic -O3 -fno-strict-aliasing -ggdb
+CFLAGS=-Wall -Wextra -std=gnu11 -pedantic -O2 -fno-strict-aliasing -ggdb
 SRCS=bstree.c main.c
 HDRS=bstree.h
 OBJS=bstree.o main.o
