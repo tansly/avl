@@ -309,23 +309,23 @@ static int traverse_postorder_cnt_(const struct bstree_node *root,
     return 0;
 }
 
-static int count_(const struct bstree_node *root,
-        const struct bstree_ops *ops, const void *object)
+static const struct bstree_node *search_(const struct bstree_node *root,
+        const struct bstree_ops *ops, const void *key)
 {
-    if (!root) {
-        return 0;
+    while (root) {
+        if (ops->compare_object(key, root->object) < 0) {
+            root = root->left;
+        } else if (ops->compare_object(key, root->object) > 0) {
+            root = root->right;
+        } else {
+            return root;
+        }
     }
-    if (ops->compare_object(object, root->object) < 0) {
-        return count_(root->left, ops, object);
-    }
-    if (ops->compare_object(object, root->object) > 0) {
-        return count_(root->right, ops, object);
-    }
-    return root->count;
+    return NULL;
 }
 
-static void *search_(const struct bstree_node *root,
-        const struct bstree_ops *ops, const void *key)
+static int count_(const struct bstree_node *root,
+        const struct bstree_ops *ops, const void *object)
 {
     if (!root) {
         return NULL;
@@ -336,7 +336,6 @@ static void *search_(const struct bstree_node *root,
     if (ops->compare_object(key, root->object) > 0) {
         return search_(root->right, ops, key);
     }
-    return root->object;
 }
 
 /* Removes the node matching the key,
@@ -465,7 +464,12 @@ int bstree_count(const struct bstree *tree, const void *key)
 
 void *bstree_search(const struct bstree *tree, const void *key)
 {
-    return search_(tree->root, tree->ops, key);
+    const struct bstree_node *node = search_(tree->root, tree->ops, key);
+    if (node) {
+        return node->object;
+    } else {
+        return NULL;
+    }
 }
 
 void bstree_remove(struct bstree *tree, const void *key)
